@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis Notas</title>
+  
+  <!-- Enlace al archivo de configuración de la PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+    body { background-color: #f3f4f6; padding: 20px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 450px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    h1 { font-size: 1.4rem; color: #1e293b; margin-bottom: 12px; }
+    
+    /* Botón especial para instalar */
+    #btn-instalar {
+      display: none;
+      width: 100%;
+      background-color: #10b981;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 15px;
+    }
+
+    input { width: 75%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
+    button.add-btn { width: 22%; padding: 10px; background-color: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    ul { list-style: none; margin-top: 15px; }
+    li { background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid #2563eb; word-break: break-word; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>📝 Mis Notas Rápidas</h1>
+    
+    <!-- Este botón se mostrará solo si el navegador soporta instalación directa -->
+    <button id="btn-instalar">📲 Instalar aplicación en el teléfono</button>
+
+    <div style="display: flex; justify-content: space-between;">
+      <input type="text" id="nota-input" placeholder="Escribe algo...">
+      <button class="add-btn" id="btn-agregar">Guardar</button>
+    </div>
+
+    <ul id="lista-notas"></ul>
+  </div>
+
+  <script>
+    // 1. Registro del Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker registrado con éxito'))
+          .catch((err) => console.error('Error al registrar Service Worker:', err));
+      });
+    }
+
+    // 2. Lógica del instalador en el dispositivo
+    let promptInstalacion;
+    const btnInstalar = document.getElementById('btn-instalar');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // Evita que el navegador muestre su banner predeterminado de inmediato
+      e.preventDefault();
+      promptInstalacion = e;
+      // Mostramos nuestro propio botón
+      btnInstalar.style.display = 'block';
+    });
+
+    btnInstalar.addEventListener('click', async () => {
+      if (!promptInstalacion) return;
+      promptInstalacion.prompt();
+      const resultado = await promptInstalacion.userChoice;
+      if (resultado.outcome === 'accepted') {
+        btnInstalar.style.display = 'none';
+      }
+      promptInstalacion = null;
+    });
+
+    // 3. Lógica sencilla de la app de notas
+    const input = document.getElementById('nota-input');
+    const btnAgregar = document.getElementById('btn-agregar');
+    const lista = document.getElementById('lista-notas');
+
+    btnAgregar.addEventListener('click', () => {
+      const texto = input.value.trim();
+      if (texto) {
+        const item = document.createElement('li');
+        item.textContent = texto;
+        lista.appendChild(item);
+        input.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
